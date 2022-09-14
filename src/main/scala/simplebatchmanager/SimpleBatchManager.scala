@@ -43,7 +43,7 @@ abstract class SimpleBatchManager[T](maxCount:Int, maxBytes:BigInt) {
 
   def flush():Unit = {
     if (batchedItems.size>0) {
-      log(s"Flusing batched items ${batchedItems.size}")
+      log(s"Flushing ${batchedItems.size} batched items")
       val items = getItems
       try {
         val failures = handleBatch(items)
@@ -57,6 +57,8 @@ abstract class SimpleBatchManager[T](maxCount:Int, maxBytes:BigInt) {
           e.printStackTrace()
       } finally {
       }
+    } else {
+      log("No items to flush")
     }
   }
   
@@ -68,4 +70,20 @@ abstract class SimpleBatchManager[T](maxCount:Int, maxBytes:BigInt) {
   def handleFailures(failedRecords:List[BatchItemFailure]):Unit
 
   case class BatchItemFailure (item:T, error:String)
+
+  Runtime.getRuntime().addShutdownHook(new Thread() {
+    override def run(): Unit = {
+      log("[runtime] SimpleBatchManager shutdownHook triggered")
+
+      try {
+        flush()
+        Thread.sleep(200)
+      } catch {
+        case e:Exception => log("[runtime] SimpleBatchManager shutdown error: "+e.getMessage);
+      }
+
+      log("[runtime] SimpleBatchManager exiting")
+      System.exit(0)
+    }
+  })
 }

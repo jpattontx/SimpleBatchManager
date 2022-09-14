@@ -1,15 +1,23 @@
-package demo;
+package demo
 
 import com.amazonaws.services.lambda.runtime.{Context, LambdaLogger, RequestHandler}
+import software.amazon.awssdk.core.SdkBytes
+import software.amazon.awssdk.services.kinesis.model.PutRecordsRequestEntry
 
+import java.nio.charset.Charset
 
-class S3WriteLambdaDemo extends RequestHandler[Request, Response] {
+class KinesisWriteDemo extends RequestHandler[Request, Response] {
 
   override def handleRequest(request: Request, context: Context): Response = {
 
     implicit val logger: LambdaLogger = context.getLogger();
     val added = try {
-      S3StringWriteBatchManager.add(request.body.message)
+      val msg = request.body.message
+      val req = PutRecordsRequestEntry.builder()
+        .partitionKey(msg)
+        .data(SdkBytes.fromString(msg,Charset.defaultCharset()))
+        .build()
+      KinesisWriteBatchManager.add(req)
       true
     } catch {
       case e: Exception =>
@@ -19,3 +27,4 @@ class S3WriteLambdaDemo extends RequestHandler[Request, Response] {
     Response(request.body.message, added, S3StringWriteBatchManager.getBatchedItemCount())
   }
 }
+
