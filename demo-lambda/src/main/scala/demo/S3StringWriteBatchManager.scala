@@ -1,5 +1,6 @@
 package demo
 
+import demo.KinesisWriteBatchManager.log
 import simplebatchmanager.SimpleBatchManager
 import software.amazon.awssdk.core.async.AsyncRequestBody
 import software.amazon.awssdk.core.sync.RequestBody
@@ -38,7 +39,8 @@ object S3StringWriteBatchManager extends SimpleBatchManager[String](maxCount = 5
 
     try {
       val req = PutObjectRequest.builder().bucket(bucketName).key(key).build()
-      s3Client.putObject(req, AsyncRequestBody.fromString(contents))
+      val res = s3Client.putObject(req, AsyncRequestBody.fromString(contents))
+      log(s"S3 response: ${res.get()}")
 
       // Reset batch ID.
       batchId = UUID.randomUUID().toString

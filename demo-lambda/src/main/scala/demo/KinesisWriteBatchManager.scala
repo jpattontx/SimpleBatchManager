@@ -36,7 +36,8 @@ object KinesisWriteBatchManager  extends SimpleBatchManager[PutRecordsRequestEnt
         .records(items:_*)
         .streamName(streamName)
         .build();
-      kinesisClient.putRecords(req)
+      val res = kinesisClient.putRecords(req)
+      log(s"Kinesis response: ${res.get()}")
 
       // Reset batch ID
       batchId = UUID.randomUUID().toString
